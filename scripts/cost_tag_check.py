@@ -27,7 +27,29 @@ def check_plan(plan_path: str) -> int:
     Returns an exit code: 0 if every resource being created or updated has
     `landlord_account_id`, non-zero otherwise.
     """
-    raise NotImplementedError("Implement this.")
+    with open(plan_path) as f:
+        plan = json.load(f)
+
+    missing_tag_resources = []
+
+    for resource in plan.get("resource_changes", []):
+        actions = resource.get("change", {}).get("actions", [])
+
+        # we are going to check only resources that are being created or updated
+        # skip any resource that is being deleted or has no change
+        
+        if "create" in actions or "update" in actions:
+            tags = resource.get("change", {}).get("after", {}).get("tags", {})
+            if "landlord_account_id" not in tags:
+                missing_tag_resources.append(resource.get("address"))
+
+    if missing_tag_resources:
+        print("Resources missing 'landlord_account_id' tag:")
+        for address in missing_tag_resources:
+            print(f"  - {address}")
+        return 1  # Non-zero exit code indicates failure
+
+    return 0  # Zero exit code indicates success
 
 
 if __name__ == "__main__":

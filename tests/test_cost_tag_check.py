@@ -1,15 +1,31 @@
-"""
-Write tests here proving:
-  1. Happy path: running the check against fixtures/plan.json correctly flags the resources
-     missing `landlord_account_id` (listing_media, mls_feed_sync) and passes the ones that
-     have it (landlord_media[0], screening_report_export). The fixture also has a "no-op"
-     entry and a "delete" entry with no `after` block at all — neither should appear in the
-     output or crash the check.
-  2. Idempotency: running the check twice against the same plan file produces the same
-     result both times, with no duplicated output.
+from pathlib import Path
 
-check_plan() takes a file path, not a dict — for a case that needs its own plan contents
-instead of the shared fixture, write one with pytest's `tmp_path` rather than editing
-fixtures/plan.json. You don't need to shell out to the real script for every case.
-"""
 from scripts.cost_tag_check import check_plan
+
+
+PLAN_PATH = Path(__file__).resolve().parents[1] / "fixtures" / "plan.json"
+
+
+def test_check_plan_happy_path(capsys):
+    result = check_plan(str(PLAN_PATH))
+    output = capsys.readouterr().out
+
+    assert result == 1
+    assert output == (
+        "Resources missing 'landlord_account_id' tag:\n"
+        "  - aws_s3_bucket.listing_media\n"
+        "  - aws_lambda_function.mls_feed_sync\n"
+    )
+
+
+def test_check_plan_is_idempotent(capsys):
+    first_result = check_plan(str(PLAN_PATH))
+    first_output = capsys.readouterr().out
+
+    second_result = check_plan(str(PLAN_PATH))
+    second_output = capsys.readouterr().out
+
+    assert second_result == first_result == 1
+    assert second_output == first_output
+    assert first_output.count("aws_s3_bucket.listing_media") == 1
+    assert first_output.count("aws_lambda_function.mls_feed_sync") == 1
