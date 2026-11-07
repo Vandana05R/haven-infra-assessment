@@ -7,3 +7,5 @@ in DESIGN_NOTES.md for what to cover. Leave this folder empty if you didn't use 
 Prompt used :
 Only for test case i have used the below prompt in co-pilot chat screen.
 Write the happy path and idempotency tests for the given test class 
+
+Please find the screen recording link here - https://drive.google.com/file/d/1xqxYmY3zX_8yt4OxNz85eZzPbGqm9skM/view
